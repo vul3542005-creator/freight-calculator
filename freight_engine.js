@@ -79,11 +79,29 @@ const FreightEngine = (() => {
   }
 
   // ────────────────────────────────────────────────────────────────
+  // 地址完整度檢查
+  // 必須含路段門號、或縣市+區之後還有具體地名，才進行聯運比對
+  // 避免「台北市」這類模糊輸入誤觸聯運規則
+  // ────────────────────────────────────────────────────────────────
+  function isAddressSpecificEnough(addr) {
+    const n = normalizeAddr(addr);
+    // 含路/街/巷/弄/號/樓/段 → 具體地址
+    if (/[路街道巷弄號樓段]/.test(n)) return true;
+    // 含里/村/鄰 → 村里層級，夠具體
+    if (/[里村鄰]/.test(n)) return true;
+    // 移除縣市層級後，再移除區鄉鎮層級，剩餘 ≥2 字才算具體
+    const afterCounty   = n.replace(/^[\u4e00-\u9fff]{2,4}[縣市]/, '');
+    const afterDistrict = afterCounty.replace(/^[\u4e00-\u9fff]{2,3}[區鄉鎮市]/, '');
+    return afterDistrict.length >= 2;
+  }
+
+  // ────────────────────────────────────────────────────────────────
   // 查詢聯運規則（special_delivery_v2.json）
   // 策略：最長 pattern 優先；同長度取 minimum 最高（保守報價）
   // ────────────────────────────────────────────────────────────────
   function findSpecialRule(addr) {
     if (!_sd || !_sd.rules) return null;
+    if (!isAddressSpecificEnough(addr)) return null;   // 地址太模糊，跳過
     const norm = normalizeAddr(addr);
     let best     = null;
     let bestLen  = 0;
