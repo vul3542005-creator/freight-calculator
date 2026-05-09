@@ -1,0 +1,129 @@
+{
+  "version": "manual-1.0",
+  "last_updated": "2026-04-11",
+  "maintainer_notes": "由 Intech 人工新增的特殊規則，HCT 官方檔案未涵蓋的業務經驗。每次重新解析 HCT Excel 時，此檔案不應被覆蓋。",
+  "schema_doc": {
+    "rule_types": {
+      "force_reroute": "強制轉運至替代地址（例如離島必須先送到船運公司）",
+      "override_fee": "覆蓋官方費率（例如特定客戶月結價，預留未來使用）",
+      "add_warning": "地址可配送但需顯示警告訊息（例如需事先預約，預留未來使用）",
+      "block_shipment": "完全拒絕配送（預留未來使用）"
+    },
+    "priority": "人工規則優先級高於 HCT 官方資料。比對流程：先比對 manual_rules → 命中則套用 → 未命中再比對 special_delivery_v2.json"
+  },
+  "rules": [
+    {
+      "id": "manual-001",
+      "type": "force_reroute",
+      "name": "蘭嶼鄉強制轉運至船運公司",
+      "enabled": true,
+      "match_keywords": ["蘭嶼鄉", "蘭嶼"],
+      "match_logic": "any",
+      "action": {
+        "redirect_type": "user_select_alternative",
+        "alternatives": [
+          {
+            "id": "shipping-001",
+            "name": "新發航運",
+            "address": "台東市中正路79號",
+            "phone": "089-351-931",
+            "service_area": ["蘭嶼鄉", "綠島鄉"],
+            "notes": ""
+          },
+          {
+            "id": "shipping-002",
+            "name": "龍鴻航運",
+            "address": "台東市四維路一段582號",
+            "phone": "089-341-527",
+            "service_area": ["蘭嶼鄉", "綠島鄉"],
+            "notes": ""
+          }
+        ],
+        "warning_message": "新竹物流不承運至蘭嶼鄉收件人地址。系統將計算運費至您指定的船運公司站止，後續從船運公司到收件人的派送請自行聯繫船運公司處理。\n\n⚠️ 重要限制：\n• 不承運「到付運費」貨件\n• 不承運「代收貨款」貨件\n• 託運單須註明指定之船公司、收件人需填寫船公司地址\n• 船運公司至收件人之間的遞送查詢請洽船運公司",
+        "user_action_required": "請選擇要送往哪一家船運公司"
+      },
+      "source": {
+        "discovered_by": "業務經驗",
+        "discovered_date": "2026-04",
+        "evidence": "HCT 官方聯運特服一覽表未列此規則，由實際出貨案例得知",
+        "hct_official_coverage": false
+      },
+      "added_date": "2026-04-11",
+      "last_verified": "2026-04-11"
+    },
+    {
+      "id": "manual-002",
+      "type": "force_reroute",
+      "name": "綠島鄉強制轉運至船運公司",
+      "enabled": true,
+      "match_keywords": ["綠島鄉", "綠島"],
+      "match_logic": "any",
+      "action": {
+        "redirect_type": "user_select_alternative",
+        "alternatives": [
+          {
+            "id": "shipping-001",
+            "name": "新發航運",
+            "address": "台東市中正路79號",
+            "phone": "089-351-931",
+            "service_area": ["蘭嶼鄉", "綠島鄉"],
+            "notes": ""
+          },
+          {
+            "id": "shipping-002",
+            "name": "龍鴻航運",
+            "address": "台東市四維路一段582號",
+            "phone": "089-341-527",
+            "service_area": ["蘭嶼鄉", "綠島鄉"],
+            "notes": ""
+          }
+        ],
+        "warning_message": "新竹物流不承運至綠島鄉收件人地址。系統將計算運費至您指定的船運公司站止，後續從船運公司到收件人的派送請自行聯繫船運公司處理。\n\n⚠️ 重要限制：\n• 不承運「到付運費」貨件\n• 不承運「代收貨款」貨件\n• 託運單須註明指定之船公司、收件人需填寫船公司地址\n• 船運公司至收件人之間的遞送查詢請洽船運公司",
+        "user_action_required": "請選擇要送往哪一家船運公司"
+      },
+      "source": {
+        "discovered_by": "業務經驗",
+        "discovered_date": "2026-04",
+        "evidence": "HCT 官方聯運特服一覽表未列此規則，由實際出貨案例得知",
+        "hct_official_coverage": false
+      },
+      "added_date": "2026-04-11",
+      "last_verified": "2026-04-11"
+    }
+  ],
+  "future_rule_examples": {
+    "_comment": "以下為預留的規則類型範例，實際使用時請複製到 rules 陣列並修改",
+    "override_fee_example": {
+      "id": "manual-XXX",
+      "type": "override_fee",
+      "name": "範例：某客戶月結特約價",
+      "enabled": false,
+      "match_keywords": ["特定地址或客戶代碼"],
+      "action": {
+        "override_minimum": 100,
+        "override_per_100kg": 200,
+        "reason": "與 XX 客戶談妥的月結價"
+      }
+    },
+    "add_warning_example": {
+      "id": "manual-XXX",
+      "type": "add_warning",
+      "name": "範例：需事先預約之配送地點",
+      "enabled": false,
+      "match_keywords": ["某社區名稱"],
+      "action": {
+        "warning_message": "此社區管制嚴格，配送前需先電話預約"
+      }
+    },
+    "block_shipment_example": {
+      "id": "manual-XXX",
+      "type": "block_shipment",
+      "name": "範例：完全不承運的地址",
+      "enabled": false,
+      "match_keywords": ["某地址"],
+      "action": {
+        "block_message": "此地址不承運，請另尋運送方式"
+      }
+    }
+  }
+}

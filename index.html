@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>HCT 運費試算｜聰明媽咪</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Header ─────────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="header-logo">📦</div>
+      <div class="header-text">
+        <h1>HCT 運費試算</h1>
+        <p>新竹物流 ｜ 聰明媽咪內部工具</p>
+      </div>
+    </header>
+
+    <main class="main-content">
+
+      <!-- ── Step 1：出貨方案 ──────────────────────────────────── -->
+      <section class="card" id="section-method">
+        <div class="step-label">
+          <span class="step-num">1</span>選擇出貨方案
+        </div>
+        <div class="method-buttons">
+
+          <button class="method-btn" data-method="smbc_self">
+            <div class="method-icon">🏠</div>
+            <div class="method-info">
+              <div class="method-name">聰明媽咪自寄</div>
+              <div class="method-desc">一般 85 起 ／ 特定區 90 起，每才 +20</div>
+            </div>
+            <div class="method-badge">無服務費</div>
+          </button>
+
+          <button class="method-btn" data-method="benlei_self">
+            <div class="method-icon">⚡</div>
+            <div class="method-info">
+              <div class="method-name">奔雷自寄</div>
+              <div class="method-desc">一般 88 起 ／ 特定區 93 起，每才 +25</div>
+            </div>
+            <div class="method-badge">無服務費</div>
+          </button>
+
+          <button class="method-btn" data-method="proxy">
+            <div class="method-icon">🤝</div>
+            <div class="method-info">
+              <div class="method-name">代客寄</div>
+              <div class="method-desc">一律 93 起，每才 +25，不分區</div>
+            </div>
+            <div class="method-badge proxy-badge">含服務費</div>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- ── Step 2：收件地址 ──────────────────────────────────── -->
+      <section class="card section-step hidden" id="section-address">
+        <div class="step-label">
+          <span class="step-num">2</span>收件地址
+        </div>
+        <div class="input-group">
+          <input
+            type="text"
+            id="address-input"
+            placeholder="例：台北市信義區松仁路 100 號"
+            autocomplete="off"
+            autocorrect="off"
+            spellcheck="false"
+            inputmode="text">
+          <div class="input-hint">請含縣市名稱，系統以此判斷費率區域</div>
+        </div>
+      </section>
+
+      <!-- ── Step 3：貨物資訊 ──────────────────────────────────── -->
+      <section class="card section-step hidden" id="section-cargo">
+        <div class="step-label">
+          <span class="step-num">3</span>貨物資訊
+        </div>
+
+        <!-- 輸入模式切換 -->
+        <div class="mode-toggle" role="group" aria-label="輸入模式">
+          <button class="mode-btn active" id="mode-cai-btn" data-mode="cai">直接輸入才數</button>
+          <button class="mode-btn"        id="mode-dims-btn" data-mode="dims">長 × 寬 × 高 cm</button>
+        </div>
+
+        <!-- 模式 A：才數（多組） -->
+        <div class="cargo-mode" id="mode-cai">
+          <div id="cai-groups"><!-- 由 JS 動態生成 --></div>
+          <button class="add-group-btn" id="add-cai-group" type="button">
+            ＋ 新增不同才數規格
+          </button>
+        </div>
+
+        <!-- 模式 B：尺寸（多組） -->
+        <div class="cargo-mode hidden" id="mode-dims">
+          <div id="dims-groups"><!-- 由 JS 動態生成 --></div>
+          <button class="add-group-btn" id="add-dims-group" type="button">
+            ＋ 新增不同尺寸規格
+          </button>
+        </div>
+
+        <!-- 代客寄服務費（只有 proxy 才顯示） -->
+        <div class="service-fee-row hidden" id="service-fee-row">
+          <div class="service-fee-divider"></div>
+          <div class="input-group">
+            <label for="service-fee-input">
+              代客寄服務費
+              <span class="label-hint">（可修改，預設 150 元）</span>
+            </label>
+            <input type="number" id="service-fee-input"
+              min="0" value="150" inputmode="numeric" pattern="[0-9]*">
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── 計算按鈕 ────────────────────────────────────────── -->
+      <button class="calc-btn hidden" id="calc-btn">
+        計算運費
+      </button>
+
+      <!-- ── 結果卡 ───────────────────────────────────────────── -->
+      <section class="card result-card hidden" id="section-result">
+        <div class="result-header">
+          <span class="result-title">運費試算結果</span>
+          <span class="result-method-tag" id="result-method-tag"></span>
+        </div>
+        <div class="result-address" id="result-address"></div>
+        <div class="result-breakdown" id="result-breakdown"></div>
+        <div class="result-total" id="result-total"></div>
+        <div class="result-notes hidden" id="result-notes"></div>
+        <button class="reset-btn" id="reset-btn">重新試算</button>
+      </section>
+
+    </main>
+  </div><!-- /#app -->
+
+  <!-- ── 轉運選擇 Modal ──────────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-icon">🚢</div>
+      <div class="modal-title"  id="modal-title"></div>
+      <div class="modal-msg"    id="modal-message"></div>
+      <div class="modal-prompt">請選擇船運公司</div>
+      <div class="modal-options" id="modal-options"></div>
+      <button class="modal-cancel" id="modal-cancel">取消</button>
+    </div>
+  </div>
+
+  <!-- ── 初始載入 Overlay ────────────────────────────────────── -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">載入資料中…</div>
+  </div>
+
+  <!-- 引擎先於 app.js 載入 -->
+  <script src="freight_engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
