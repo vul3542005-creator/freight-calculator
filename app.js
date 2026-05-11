@@ -107,20 +107,18 @@ function showAddressError(msg) {
 async function loadEngineData() {
   show(DOM.loadingOverlay);
   try {
-    const [sdRes, mrRes, tdRes] = await Promise.all([
-      fetch('special_delivery_v3-1.json'),
+    const [sdRes, mrRes] = await Promise.all([
+      fetch('special_delivery_v2.json'),
       fetch('manual_rules.json'),
-      fetch('taiwan_districts.json'),
     ]);
     for (const [name, res] of [
       ['special_delivery_v2.json', sdRes],
       ['manual_rules.json',        mrRes],
-      ['taiwan_districts.json',    tdRes],
     ]) {
       if (!res.ok) throw new Error(`${name} 載入失敗（HTTP ${res.status}）`);
     }
-    const [sd, mr, td] = await Promise.all([sdRes.json(), mrRes.json(), tdRes.json()]);
-    FreightEngine.initData(sd, mr, td);
+    const [sd, mr] = await Promise.all([sdRes.json(), mrRes.json()]);
+    FreightEngine.initData(sd, mr);
     state.engineReady = true;
   } catch (err) {
     hide(DOM.loadingOverlay);
