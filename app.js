@@ -108,7 +108,7 @@ async function loadEngineData() {
   show(DOM.loadingOverlay);
   try {
     const [sdRes, mrRes, tdRes] = await Promise.all([
-      fetch('special_delivery_v2.json'),
+      fetch('special_delivery_v3-1.json'),
       fetch('manual_rules.json'),
       fetch('taiwan_districts.json'),
     ]);
