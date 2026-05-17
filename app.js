@@ -59,56 +59,13 @@ const DOM = {
 };
 
 // ────────────────────────────────────────────────────────────────
-// 地址完整度驗證
-// 通過條件（符合任一即可）：
-//   ① 含路名關鍵字（路／街／大道／巷／弄）
-//   ② 含「數字＋號／樓」
-//   ③ 字數 ≥ 12（具體景點、商場、公司名稱）
-// 目的：防止只輸入縣市或行政區名稱（如「台中」「大里區」）
-//       導致聯運費誤判
-// ────────────────────────────────────────────────────────────────
-function validateAddress(addr) {
-  const norm = addr.replace(/臺/g, '台').replace(/\s+/g, '');
-  if (!norm) return null;  // 空白由外層 doCalculate 處理
-
-  if (norm.length < 6) {
-    return '地址過短，請輸入完整收件地址（例：縣市＋區域＋路名＋門號）';
-  }
-  if (/[路街道巷弄]/.test(norm)) return null;   // 含路名 → 通過
-  if (/\d+[號樓層F]/.test(norm)) return null;  // 含門號 → 通過
-  if (norm.length >= 12) return null;            // 夠長的景點/公司名 → 通過
-
-  return '地址可能不完整，請確認包含路名（路／街／巷）或門號，\n避免只輸入縣市或行政區名稱，以免費率判斷錯誤。';
-}
-
-function showAddressError(msg) {
-  let el = document.getElementById('address-error');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'address-error';
-    Object.assign(el.style, {
-      fontSize: '12px',
-      color: '#d97706',
-      marginTop: '6px',
-      lineHeight: '1.5',
-      whiteSpace: 'pre-line',
-    });
-    DOM.addressInput.parentNode.appendChild(el);
-  }
-  el.textContent = msg || '';
-  el.style.display = msg ? 'block' : 'none';
-}
-
-
-
-// ────────────────────────────────────────────────────────────────
 // 資料載入 & 引擎初始化
 // ────────────────────────────────────────────────────────────────
 async function loadEngineData() {
   show(DOM.loadingOverlay);
   try {
     const [sdRes, mrRes] = await Promise.all([
-      fetch('special_delivery_v3-1.json'),
+      fetch('special_delivery_v3-6.json'),
       fetch('manual_rules.json'),
     ]);
     for (const [name, res] of [
@@ -144,22 +101,6 @@ document.querySelectorAll('.method-btn').forEach(btn => {
     setTimeout(() => DOM.addressInput.focus(), 300);
   });
 });
-
-// ────────────────────────────────────────────────────────────────
-// 地址輸入框：離開時即時驗證
-// ────────────────────────────────────────────────────────────────
-DOM.addressInput.addEventListener('blur', () => {
-  const val = DOM.addressInput.value.trim();
-  if (val) showAddressError(validateAddress(val));
-});
-DOM.addressInput.addEventListener('input', () => {
-  // 使用者修改中：若之前有錯誤訊息才重新評估
-  if (document.getElementById('address-error')?.style.display === 'block') {
-    showAddressError(validateAddress(DOM.addressInput.value.trim()));
-  }
-});
-
-
 
 // ────────────────────────────────────────────────────────────────
 // Step 3：貨物模式切換
@@ -345,16 +286,6 @@ function doCalculate(selectedAlternativeId) {
   const address = DOM.addressInput.value.trim();
   if (!address) { alert('請輸入收件地址。'); DOM.addressInput.focus(); return; }
 
-  // 地址完整度驗證
-  const addrWarning = validateAddress(address);
-  showAddressError(addrWarning);
-  if (addrWarning) {
-    // 顯示錯誤但不強制阻擋：讓使用者看到提示後可選擇繼續或修改
-    // 若地址明顯過短（< 6字）才強制阻擋
-    const norm = address.replace(/臺/g, '台').replace(/\s+/g, '');
-    if (norm.length < 6) { DOM.addressInput.focus(); return; }
-  }
-
   const groups = buildGroups();
   if (groups === 'empty')        { alert('請至少輸入一組貨物資訊。'); return; }
   if (groups === 'invalid_cai')  { alert('才數必須為正整數（最低 3 才）。'); return; }
@@ -503,7 +434,6 @@ function resetAll() {
   hide(DOM.sectionResult);
   hide(DOM.resultNotes);
   DOM.addressInput.value    = '';
-  showAddressError(null);
   DOM.serviceFeeInput.value = '150';
   DOM.caiGroupsCont.innerHTML  = '';
   DOM.dimsGroupsCont.innerHTML = '';
