@@ -80,7 +80,7 @@ const FreightEngine = (() => {
 
   // ────────────────────────────────────────────────────────────────
   // 查詢聯運規則（special_delivery_v2.json）
-  // 策略：最長 pattern 優先；同長度取 minimum 最高（保守報價）
+  // 策略：最長 pattern 優先；同長度時 sea 優先於 air；再取 minimum 最高（保守報價）
   // ────────────────────────────────────────────────────────────────
   function findSpecialRule(addr) {
     if (!_sd || !_sd.rules) return null;
@@ -92,12 +92,18 @@ const FreightEngine = (() => {
       if (!rule.destination_patterns) continue;
       for (const pat of rule.destination_patterns) {
         const normPat = normalizeAddr(pat);
-        if (!normPat || normPat.length < 3) continue;  // 過濾過短 pattern，防止誤觸一般地址
+        if (!normPat) continue;
         if (norm.includes(normPat)) {
-          if (
+          const isBetter =
             normPat.length > bestLen ||
-            (normPat.length === bestLen && best && rule.minimum > best.minimum)
-          ) {
+            (normPat.length === bestLen && !best) ||
+            (normPat.length === bestLen && best && (
+              // sea 優先於 air（避免空運限才限重規則蓋掉較便宜的海運費率）
+              (rule.routing_mode === 'sea' && best.routing_mode === 'air') ||
+              // 同 routing_mode 才比 minimum（保守報價）
+              (rule.routing_mode === best.routing_mode && rule.minimum > best.minimum)
+            ));
+          if (isBetter) {
             bestLen = normPat.length;
             best    = rule;
           }
