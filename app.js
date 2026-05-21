@@ -65,11 +65,11 @@ async function loadEngineData() {
   show(DOM.loadingOverlay);
   try {
     const [sdRes, mrRes] = await Promise.all([
-      fetch('special_delivery_v3-7.json'),
+      fetch('special_delivery_v3-8.json'),
       fetch('manual_rules.json'),
     ]);
     for (const [name, res] of [
-      ['special_delivery_v3-7.json', sdRes],
+      ['special_delivery_v3-8.json', sdRes],
       ['manual_rules.json',        mrRes],
     ]) {
       if (!res.ok) throw new Error(`${name} 載入失敗（HTTP ${res.status}）`);
