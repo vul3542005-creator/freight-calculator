@@ -1,167 +1,1160 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>HCT 運費試算｜聰明媽咪</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>會議 AI 助手</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f2f2f7;--card:#fff;--blue:#007AFF;--red:#e03434;--green:#34C759;
+  --t1:#1c1c1e;--t2:#6e6e73;--t3:#aeaeb2;--border:#d1d1d6;
+  --font:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif
+}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+#app{max-width:520px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+.scr{display:flex;flex-direction:column;overflow:hidden;flex:1}
+
+.hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0;flex-shrink:0}
+.hd h2{font-size:18px;font-weight:600}
+.back{background:none;border:none;color:var(--blue);font-size:15px;cursor:pointer;font-family:var(--font);padding:4px 0}
+.scroll-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.foot1{padding:12px 16px 24px;flex-shrink:0}
+.foot2{padding:12px 16px 24px;display:flex;gap:8px;flex-shrink:0}
+
+.card{background:var(--card);border-radius:14px;padding:14px 16px}
+.card label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:6px}
+.card textarea,.card input[type=text],.card input[type=password]{width:100%;border:none;outline:none;font-size:15px;color:var(--t1);background:transparent;font-family:var(--font);resize:none;line-height:1.5}
+.card textarea::placeholder,.card input::placeholder{color:var(--t3)}
+
+.btn{padding:13px;border:none;border-radius:14px;font-size:16px;font-weight:500;cursor:pointer;width:100%;font-family:var(--font);transition:opacity .15s}
+.btn:disabled{opacity:.5;cursor:default}
+.btn-bl{background:var(--blue);color:#fff}
+.btn-gy{background:var(--bg);color:var(--t1);border:1px solid var(--border)}
+.btn-sm{padding:10px 0;border-radius:10px;font-size:13px;font-weight:500;border:1px solid var(--border);cursor:pointer;font-family:var(--font);flex:1;background:var(--bg);color:var(--t1)}
+
+.err-txt{color:var(--red);font-size:13px;text-align:center;min-height:16px}
+
+/* ════ Screen 1: API Key ════ */
+#s-key{align-items:center;justify-content:center;padding:32px 24px;gap:16px}
+#s-key h1{font-size:22px;font-weight:600}
+.key-sub{font-size:14px;color:var(--t2);text-align:center;line-height:1.6}
+.key-inp{width:100%;padding:13px 16px;border:1px solid var(--border);border-radius:12px;font-size:15px;outline:none;background:var(--card);font-family:var(--font)}
+.key-inp:focus{border-color:var(--blue)}
+.key-note{font-size:12px;color:var(--t3);text-align:center}
+.key-note a{color:var(--blue);text-decoration:none}
+
+/* ════ Screen 2: Setup ════ */
+.upload-zone{border:1.5px dashed var(--border);border-radius:12px;padding:14px;text-align:center;cursor:pointer}
+.upload-zone .uz-icon{font-size:28px;display:block;margin-bottom:4px}
+.upload-zone p{font-size:13px;color:var(--t2)}
+.ftag{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;border-radius:8px;background:var(--bg);margin-top:6px}
+.ftag .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftag .fx{cursor:pointer;color:var(--t3);font-size:16px;flex-shrink:0}
+.warn-card{background:#fff8dc;border:1px solid #ffe082;border-radius:14px;padding:12px 16px;font-size:13px;color:#7a6002;line-height:1.5}
+
+/* ════ Screen 3: Recording ════ */
+#s-rec{align-items:center;justify-content:center;padding:32px 24px;gap:0}
+.rec-name{font-size:18px;font-weight:600;text-align:center;margin-bottom:6px}
+.rec-ptcp{font-size:13px;color:var(--t2);text-align:center;min-height:18px;margin-bottom:6px}
+.rec-seg-note{font-size:12px;color:var(--blue);background:rgba(0,122,255,.1);padding:3px 12px;border-radius:8px;margin-bottom:20px}
+.rec-circle{width:88px;height:88px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:700;letter-spacing:2px;margin-bottom:24px;flex-shrink:0;animation:rec-pulse 1.6s ease-in-out infinite}
+.rec-circle.paused{animation:none;background:var(--t3);opacity:.7}
+@keyframes rec-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,52,52,.45)}60%{box-shadow:0 0 0 14px rgba(224,52,52,0)}}
+.timer{font-size:clamp(56px,16vw,76px);font-weight:200;font-variant-numeric:tabular-nums;letter-spacing:3px;margin-bottom:6px;color:var(--t1)}
+.rec-stat{font-size:14px;font-weight:500;color:var(--t2);margin-bottom:36px}
+.rec-stat.paused{color:#FF9500}
+.rec-btns{display:flex;gap:16px;align-items:center}
+.rec-btn{display:flex;flex-direction:column;align-items:center;gap:7px;padding:16px 20px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;min-width:96px;transition:transform .1s}
+.rec-btn:active{transform:scale(.93)}
+.rec-btn .bi{font-size:26px;line-height:1}
+.rec-btn.rp{background:var(--card);color:var(--t1);box-shadow:0 2px 10px rgba(0,0,0,.09)}
+.rec-btn.rs{background:var(--red);color:#fff;box-shadow:0 5px 20px rgba(224,52,52,.32)}
+.cancel-btn{font-size:14px;color:var(--t3);background:none;border:none;cursor:pointer;font-family:var(--font);margin-top:28px;padding:8px}
+
+/* ════ Screen 4: Processing ════ */
+#s-proc{align-items:center;justify-content:center;padding:32px 24px;gap:18px}
+.proc-icon{font-size:52px}
+.proc-title{font-size:20px;font-weight:600}
+.proc-sub{font-size:14px;color:var(--t2);text-align:center;line-height:1.6}
+.steps{width:100%;display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--card);font-size:14px;color:var(--t1)}
+.step.s-off{color:var(--t3)}
+.step.s-ok{color:var(--green)}
+.step .si{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+.step.s-on .si{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.proc-actions{display:flex;gap:10px;width:100%}
+.proc-actions .btn-sm{font-size:13px;padding:9px 0}
+.proc-actions .btn-cont{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* ════ Screen 5: Output ════ */
+#s-out .hd{border-bottom:1px solid var(--border);padding-bottom:12px}
+.os{background:var(--card);border-radius:14px;padding:14px 16px}
+.os h3{font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.sum-txt{font-size:15px;line-height:1.75;color:var(--t1);white-space:pre-wrap}
+.dec-row{font-size:14px;padding:7px 0;border-bottom:1px solid var(--bg);line-height:1.6;color:var(--t1)}
+.dec-row:last-child{border-bottom:none}
+.tbl-wrap{overflow-x:auto;margin-top:2px}
+.task-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.task-tbl th{background:var(--bg);padding:8px 9px;text-align:left;font-size:12px;font-weight:600;color:var(--t2);border-bottom:1px solid var(--border)}
+.task-tbl td{padding:9px 9px;border-bottom:1px solid var(--bg);vertical-align:top;color:var(--t1);line-height:1.5}
+.task-tbl tr:last-child td{border-bottom:none}
+.note-txt{font-size:12px;color:var(--t2);margin-top:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
+.b-h{background:#fff0f0;color:#c00}
+.b-m{background:#fff8e0;color:#a06000}
+.b-l{background:#f0fff4;color:#0a7a0a}
+.empty-msg{text-align:center;color:var(--t2);font-size:14px;padding:20px 0}
+
+/* ════ Toast ════ */
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.82);color:#fff;padding:9px 20px;border-radius:20px;
+  font-size:13px;z-index:999;opacity:0;transition:opacity .35s;pointer-events:none;
+  max-width:88vw;text-align:center;line-height:1.4
+}
+.toast.show{opacity:1}
+
+[hidden]{display:none!important}
+</style>
 </head>
 <body>
-  <div id="app">
+<div id="app">
 
-    <!-- ── Header ─────────────────────────────────────────────── -->
-    <header class="app-header">
-      <div class="header-logo">📦</div>
-      <div class="header-text">
-        <h1>HCT 運費試算</h1>
-        <p>新竹物流 ｜ 聰明媽咪內部工具</p>
+<!-- ══════ Screen 1: API Key ══════ -->
+<div id="s-key" class="scr">
+  <div style="font-size:52px">🎙️</div>
+  <h1>會議 AI 助手</h1>
+  <p class="key-sub">請輸入你的 Google Gemini API Key<br>僅存在瀏覽器本地，不會上傳至任何伺服器</p>
+  <input id="inp-key" class="key-inp" type="password" placeholder="貼上你的 Gemini API Key…" autocomplete="off">
+  <p id="key-err" class="err-txt"></p>
+  <button class="btn btn-bl" onclick="saveKey()">開始使用</button>
+  <p class="key-note">取得免費 API Key：<a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p>
+</div>
+
+<!-- ══════ Screen 2: Setup ══════ -->
+<div id="s-setup" class="scr" hidden>
+  <div class="hd">
+    <button class="back" onclick="showScr('s-key')">← 返回</button>
+    <h2>會議設定</h2>
+    <div style="width:52px"></div>
+  </div>
+  <div class="scroll-body">
+    <div class="card" id="recover-banner" hidden style="border:1px solid var(--blue);background:#eaf3ff">
+      <label style="color:var(--blue)">🗂 尚有未處理的會議紀錄</label>
+      <div id="recover-info" style="font-size:14px;margin-bottom:10px"></div>
+      <button class="btn-sm" style="width:100%" onclick="viewRecovered()">📂 查看該筆紀錄</button>
+    </div>
+    <div class="card">
+      <label>會議名稱</label>
+      <input id="inp-title" type="text" placeholder="例：本週部門例會">
+    </div>
+    <div class="card">
+      <label>議程</label>
+      <textarea id="inp-agenda" rows="3" placeholder="1. 產品方向討論&#10;2. 預算分配&#10;3. 任務確認"></textarea>
+    </div>
+    <div class="card">
+      <label>背景資料 / 待決議事項</label>
+      <textarea id="inp-bg" rows="3" placeholder="上次決議、需解決的問題等"></textarea>
+    </div>
+    <div class="card">
+      <label>參與者</label>
+      <input id="inp-ptcp" type="text" placeholder="例：王、李、張">
+    </div>
+    <div class="card">
+      <label>參考資料（選填）</label>
+      <div class="upload-zone" onclick="document.getElementById('file-inp').click()">
+        <span class="uz-icon">📎</span>
+        <p>點擊上傳 Excel / Word / TXT</p>
+        <input id="file-inp" type="file" accept=".xlsx,.xls,.docx,.txt" multiple hidden onchange="handleFiles(this.files)">
       </div>
-    </header>
+      <div id="file-list"></div>
+    </div>
+    <div class="warn-card">🔒 錄音結束後將上傳至 Google AI 伺服器進行分析，請注意會議資訊安全。</div>
+  </div>
+  <div class="foot1">
+    <button id="start-btn" class="btn btn-bl" onclick="goToReady()">➡️ 準備開始會議</button>
+  </div>
+</div>
 
-    <main class="main-content">
+<!-- ══════ Screen 2.5: 確認頁（過渡頁，尚未錄音） ══════ -->
+<div id="s-ready" class="scr" hidden>
+  <div class="hd">
+    <button class="back" onclick="showScr('s-setup')">← 修改資訊</button>
+    <h2>確認會議資訊</h2>
+    <div style="width:64px"></div>
+  </div>
+  <div class="scroll-body">
+    <div class="card">
+      <label>會議名稱</label>
+      <div id="ready-title" style="font-size:15px"></div>
+    </div>
+    <div class="card" id="ready-ptcp-card" hidden>
+      <label>參與者</label>
+      <div id="ready-ptcp" style="font-size:15px"></div>
+    </div>
+    <div class="card" id="ready-agenda-card" hidden>
+      <label>議程</label>
+      <div id="ready-agenda" style="font-size:15px;white-space:pre-wrap"></div>
+    </div>
+    <div class="card" id="ready-bg-card" hidden>
+      <label>背景資料 / 待決議事項</label>
+      <div id="ready-bg" style="font-size:15px;white-space:pre-wrap"></div>
+    </div>
+    <div class="card" id="ready-files-card" hidden>
+      <label>參考資料</label>
+      <div id="ready-files" style="font-size:13px;color:var(--t2)"></div>
+    </div>
+    <div class="warn-card">🎤 按下「開始錄音」的當下麥克風就會開始收音，請確認上方資訊無誤後再開始。若要修改，請按左上角「修改資訊」。</div>
+  </div>
+  <div class="foot1">
+    <button id="ready-start-btn" class="btn btn-bl" onclick="startRecordingNow()">🔴 開始錄音</button>
+  </div>
+</div>
 
-      <!-- ── Step 1：出貨方案 ──────────────────────────────────── -->
-      <section class="card" id="section-method">
-        <div class="step-label">
-          <span class="step-num">1</span>選擇出貨方案
-        </div>
-        <div class="method-buttons">
+<!-- ══════ Screen 3: Recording ══════ -->
+<div id="s-rec" class="scr" hidden>
+  <div id="rec-name" class="rec-name">會議進行中</div>
+  <div id="rec-ptcp" class="rec-ptcp"></div>
+  <div id="rec-seg-note" class="rec-seg-note" hidden></div>
+  <div id="rec-circle" class="rec-circle">REC</div>
+  <div id="timer" class="timer">00:00</div>
+  <div id="rec-stat" class="rec-stat">錄音中</div>
+  <div class="rec-btns">
+    <button id="pause-btn" class="rec-btn rp" onclick="togglePause()">
+      <span id="pause-icon" class="bi">⏸️</span>
+      <span id="pause-label">暫停</span>
+    </button>
+    <button class="rec-btn rs" onclick="stopRec()">
+      <span class="bi">⏹️</span>
+      <span>停止</span>
+    </button>
+  </div>
+  <button class="cancel-btn" onclick="cancelRec()">取消（不儲存本次錄音）</button>
+</div>
 
-          <button class="method-btn" data-method="smbc_self">
-            <div class="method-icon">🏠</div>
-            <div class="method-info">
-              <div class="method-name">聰明媽咪自寄</div>
-              <div class="method-desc">一般 85 起 ／ 特定區 90 起，每才 +20</div>
-            </div>
-            <div class="method-badge">無服務費</div>
-          </button>
+<!-- ══════ Screen 3.5: 錄音完成，等待手動分析 ══════ -->
+<div id="s-done" class="scr" hidden>
+  <div class="hd">
+    <h2>錄音已完成</h2>
+    <div style="width:52px"></div>
+  </div>
+  <div class="scroll-body">
+    <div class="card" style="text-align:center">
+      <div style="font-size:40px;margin-bottom:8px">🎬</div>
+      <div id="done-name" style="font-size:16px;font-weight:600"></div>
+      <div id="done-info" style="font-size:13px;color:var(--t2);margin-top:4px"></div>
+    </div>
+    <div class="warn-card">確認會議內容都錄完了嗎？按下「開始 AI 分析」後才會把錄音上傳至 Google AI 伺服器進行分析。</div>
+  </div>
+  <div class="foot1" style="padding-bottom:4px">
+    <button class="btn btn-bl" onclick="beginProcess(lastBlob)">🤖 開始 AI 分析</button>
+  </div>
+  <div class="foot2">
+    <button class="btn-sm" onclick="procContinueRec()">🎤 繼續錄音</button>
+    <button class="btn-sm" onclick="procCancel()">🗑 捨棄本次錄音</button>
+  </div>
+</div>
 
-          <button class="method-btn" data-method="benlei_self">
-            <div class="method-icon">⚡</div>
-            <div class="method-info">
-              <div class="method-name">奔雷自寄</div>
-              <div class="method-desc">一般 88 起 ／ 特定區 93 起，每才 +25</div>
-            </div>
-            <div class="method-badge">無服務費</div>
-          </button>
-
-          <button class="method-btn" data-method="proxy">
-            <div class="method-icon">🤝</div>
-            <div class="method-info">
-              <div class="method-name">代客寄</div>
-              <div class="method-desc">一律 93 起，每才 +25，不分區</div>
-            </div>
-            <div class="method-badge proxy-badge">含服務費</div>
-          </button>
-
-        </div>
-      </section>
-
-      <!-- ── Step 2：收件地址 ──────────────────────────────────── -->
-      <section class="card section-step hidden" id="section-address">
-        <div class="step-label">
-          <span class="step-num">2</span>收件地址
-        </div>
-        <div class="input-group">
-          <input
-            type="text"
-            id="address-input"
-            placeholder="例：台北市信義區松仁路 100 號"
-            autocomplete="off"
-            autocorrect="off"
-            spellcheck="false"
-            inputmode="text">
-          <div class="input-hint">請輸入完整地址（含路名或具體地點），系統才能準確計算聯運費用</div>
-        </div>
-      </section>
-
-      <!-- ── Step 3：貨物資訊 ──────────────────────────────────── -->
-      <section class="card section-step hidden" id="section-cargo">
-        <div class="step-label">
-          <span class="step-num">3</span>貨物資訊
-        </div>
-
-        <!-- 輸入模式切換 -->
-        <div class="mode-toggle" role="group" aria-label="輸入模式">
-          <button class="mode-btn active" id="mode-cai-btn" data-mode="cai">直接輸入才數</button>
-          <button class="mode-btn"        id="mode-dims-btn" data-mode="dims">長 × 寬 × 高 cm</button>
-        </div>
-
-        <!-- 模式 A：才數（多組） -->
-        <div class="cargo-mode" id="mode-cai">
-          <div id="cai-groups"><!-- 由 JS 動態生成 --></div>
-          <button class="add-group-btn" id="add-cai-group" type="button">
-            ＋ 新增不同才數規格
-          </button>
-        </div>
-
-        <!-- 模式 B：尺寸（多組） -->
-        <div class="cargo-mode hidden" id="mode-dims">
-          <div id="dims-groups"><!-- 由 JS 動態生成 --></div>
-          <button class="add-group-btn" id="add-dims-group" type="button">
-            ＋ 新增不同尺寸規格
-          </button>
-        </div>
-
-        <!-- 代客寄服務費（只有 proxy 才顯示） -->
-        <div class="service-fee-row hidden" id="service-fee-row">
-          <div class="service-fee-divider"></div>
-          <div class="input-group">
-            <label for="service-fee-input">
-              代客寄服務費
-              <span class="label-hint">（可修改，預設 150 元）</span>
-            </label>
-            <input type="number" id="service-fee-input"
-              min="0" value="150" inputmode="numeric" pattern="[0-9]*">
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ── 計算按鈕 ────────────────────────────────────────── -->
-      <button class="calc-btn hidden" id="calc-btn">
-        計算運費
-      </button>
-
-      <!-- ── 結果卡 ───────────────────────────────────────────── -->
-      <section class="card result-card hidden" id="section-result">
-        <div class="result-header">
-          <span class="result-title">運費試算結果</span>
-          <span class="result-method-tag" id="result-method-tag"></span>
-        </div>
-        <div class="result-address" id="result-address"></div>
-        <div class="result-breakdown" id="result-breakdown"></div>
-        <div class="result-total" id="result-total"></div>
-        <div class="result-notes hidden" id="result-notes"></div>
-        <button class="reset-btn" id="reset-btn">重新試算</button>
-      </section>
-
-    </main>
-  </div><!-- /#app -->
-
-  <!-- ── 轉運選擇 Modal ──────────────────────────────────────── -->
-  <div class="modal-overlay hidden" id="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal">
-      <div class="modal-icon">🚢</div>
-      <div class="modal-title"  id="modal-title"></div>
-      <div class="modal-msg"    id="modal-message"></div>
-      <div class="modal-prompt">請選擇船運公司</div>
-      <div class="modal-options" id="modal-options"></div>
-      <button class="modal-cancel" id="modal-cancel">取消</button>
+<!-- ══════ Screen 4: Processing ══════ -->
+<div id="s-proc" class="scr" hidden>
+  <div class="proc-icon">🤖</div>
+  <div class="proc-title">AI 分析中</div>
+  <div id="proc-sub" class="proc-sub">正在處理會議錄音，請稍候…</div>
+  <div class="steps">
+    <div class="step" id="step-0">
+      <span class="si">⬆️</span><span>準備音頻資料</span>
+    </div>
+    <div class="step s-off" id="step-1">
+      <span class="si">🤖</span><span>送出 Gemini 分析</span>
+    </div>
+    <div class="step s-off" id="step-2">
+      <span class="si">📋</span><span>生成摘要與行動事項</span>
     </div>
   </div>
-
-  <!-- ── 初始載入 Overlay ────────────────────────────────────── -->
-  <div class="loading-overlay" id="loading-overlay">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">載入資料中…</div>
+  <div class="proc-actions">
+    <button class="btn-sm" onclick="procCancel()">✕ 取消分析</button>
+    <button class="btn-sm btn-cont" onclick="procContinueRec()">🎤 繼續錄音</button>
   </div>
+  <p id="proc-err" class="err-txt" style="margin-top:2px"></p>
+  <button id="retry-btn" class="btn btn-gy" onclick="retryProc()" hidden style="width:auto;padding:10px 28px;margin-top:4px">重試</button>
+</div>
 
-  <!-- 引擎先於 app.js 載入 -->
-  <script src="freight_engine.js"></script>
-  <script src="app.js"></script>
+<!-- ══════ Screen 5: Output ══════ -->
+<div id="s-out" class="scr" hidden>
+  <div class="hd">
+    <span id="out-date" style="font-size:12px;color:var(--t2)"></span>
+    <h2 id="out-title" style="font-size:16px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">會議紀錄</h2>
+    <button class="back" style="font-size:13px" onclick="newMtg()">新會議</button>
+  </div>
+  <div class="scroll-body" id="out-body"></div>
+  <!-- 分開下載：每個檔案各自獨立按鈕，避免瀏覽器擋下連續自動下載 -->
+  <div class="foot2" style="padding-top:12px">
+    <button class="btn-sm" onclick="exportTxt()">📄 TXT</button>
+    <button class="btn-sm" onclick="exportXls()">📊 Excel</button>
+    <button class="btn-sm" id="dl-audio-btn" onclick="exportAudio()" hidden>🎙️ 音檔</button>
+    <button class="btn-sm" onclick="exportScreenshot()">📸 截圖</button>
+  </div>
+  <!-- 主要動作：確認都下載完後才關閉會議 -->
+  <div class="foot1" style="padding-top:4px">
+    <button id="close-btn" class="btn btn-bl" onclick="closeMeeting()">🔒 關閉會議</button>
+  </div>
+</div>
+
+<!-- ══════ Toast 通知 ══════ -->
+<div id="toast" class="toast"></div>
+
+</div><!-- #app -->
+<script>
+// ══════════════════════════════════════════════
+//  常數 & 狀態
+// ══════════════════════════════════════════════
+const KEY_S    = 'gemini_key';
+const SETUP_S  = 'mtg_setup_v3';
+const OUTPUT_S = 'mtg_output_v1';   // 會議結果持久化
+
+let apiKey = localStorage.getItem(KEY_S) || '';
+
+// 會議基本資料
+let mtgTitle = '', mtgPtcp = '', mtgAgenda = '', mtgBg = '', uploadRef = '';
+let uploadedFiles = [];
+
+// 錄音
+let mediaRecorder = null;
+let audioChunks   = [];
+let audioStream   = null;
+let recSecs       = 0;
+let timerTick     = null;
+let isPaused      = false;
+
+// 多段錄音
+let savedBlobs     = [];   // 前幾段已完成的 Blob
+let lastBlob       = null; // 最新一段
+let processedBlobs = [];   // 本次分析所有 Blob（供音檔下載）
+
+// 分析 / 輸出
+let fetchAbortCtrl = null;
+let outputData     = null;
+let _recoveredData = null;  // 尚未下載/確認完成的上次會議紀錄（設定頁提示卡用）
+
+// ══════════════════════════════════════════════
+//  初始化：嘗試恢復上次結果
+// ══════════════════════════════════════════════
+window.onload = () => {
+  if (apiKey.length >= 20) {
+    document.getElementById('inp-key').value = apiKey;
+    loadForm();
+    checkSavedOutput();
+    showScr('s-setup');
+  } else {
+    showScr('s-key');
+  }
+};
+
+// 檢查是否有尚未下載/確認完成的舊紀錄，只顯示提示卡，不強制跳轉畫面
+function checkSavedOutput() {
+  try {
+    const saved = localStorage.getItem(OUTPUT_S);
+    if (!saved) { hideRecoverBanner(); return; }
+    const parsed = JSON.parse(saved);
+    if (parsed?.data) {
+      _recoveredData = parsed;
+      document.getElementById('recover-info').textContent =
+        (parsed.title || '未命名會議') + '（尚未確認完成，可能是上次意外關閉頁面）';
+      document.getElementById('recover-banner').hidden = false;
+    } else {
+      hideRecoverBanner();
+    }
+  } catch(e) {
+    localStorage.removeItem(OUTPUT_S);
+    hideRecoverBanner();
+  }
+}
+
+function hideRecoverBanner() {
+  _recoveredData = null;
+  document.getElementById('recover-banner').hidden = true;
+}
+
+function viewRecovered() {
+  if (!_recoveredData) return;
+  outputData     = _recoveredData.data;
+  mtgTitle       = _recoveredData.title  || '';
+  mtgPtcp        = _recoveredData.ptcp   || '';
+  mtgAgenda      = _recoveredData.agenda || '';
+  mtgBg          = _recoveredData.bg     || '';
+  processedBlobs = [];  // 重整後記憶體已清空，音檔無法取回
+  renderOutput(true);   // isRestore=true → 不重複自動下載
+  showScr('s-out');
+}
+
+function showScr(id) {
+  ['s-key','s-setup','s-ready','s-rec','s-done','s-proc','s-out'].forEach(s => {
+    document.getElementById(s).hidden = (s !== id);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  Screen 1 – API Key
+// ══════════════════════════════════════════════
+function saveKey() {
+  const k   = document.getElementById('inp-key').value.trim();
+  const err = document.getElementById('key-err');
+  if (k.length < 20) { err.textContent = 'API Key 格式有誤，請再確認'; return; }
+  err.textContent = '';
+  apiKey = k;
+  localStorage.setItem(KEY_S, k);
+  loadForm();
+  showScr('s-setup');
+}
+
+// ══════════════════════════════════════════════
+//  Screen 2 – 設定 & 上傳
+// ══════════════════════════════════════════════
+function loadForm() {
+  try {
+    const d = JSON.parse(localStorage.getItem(SETUP_S) || '{}');
+    document.getElementById('inp-title').value  = d.title  || '';
+    document.getElementById('inp-agenda').value = d.agenda || '';
+    document.getElementById('inp-bg').value     = d.bg     || '';
+    document.getElementById('inp-ptcp').value   = d.ptcp   || '';
+  } catch(e) {}
+}
+
+function saveForm() {
+  localStorage.setItem(SETUP_S, JSON.stringify({
+    title  : document.getElementById('inp-title').value.trim(),
+    agenda : document.getElementById('inp-agenda').value.trim(),
+    bg     : document.getElementById('inp-bg').value.trim(),
+    ptcp   : document.getElementById('inp-ptcp').value.trim()
+  }));
+}
+
+async function handleFiles(files) {
+  for (const f of files) {
+    const ext = f.name.split('.').pop().toLowerCase();
+    let text = '';
+    try {
+      if (ext === 'txt')                        text = await f.text();
+      else if (ext === 'xlsx' || ext === 'xls') text = await readXlsx(f);
+      else if (ext === 'docx')                  text = await readDocx(f);
+      if (text) uploadedFiles.push({ name: f.name, text });
+    } catch(e) { alert('讀取失敗：' + f.name + '\n' + e.message); }
+  }
+  document.getElementById('file-inp').value = '';
+  renderFiles();
+}
+
+function readXlsx(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        let out = '';
+        wb.SheetNames.forEach(n => {
+          out += '【' + n + '】\n' +
+            XLSX.utils.sheet_to_csv(wb.Sheets[n])
+              .split('\n').filter(r => r.replace(/,/g,'').trim()).slice(0, 200).join('\n') + '\n';
+        });
+        res(out);
+      } catch(e) { rej(e); }
+    };
+    r.readAsArrayBuffer(f);
+  });
+}
+
+function readDocx(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => mammoth.extractRawText({ arrayBuffer: e.target.result }).then(r => res(r.value)).catch(rej);
+    r.readAsArrayBuffer(f);
+  });
+}
+
+function renderFiles() {
+  document.getElementById('file-list').innerHTML = uploadedFiles.map((f, i) =>
+    `<div class="ftag"><span class="fname">📄 ${h(f.name)}</span><span class="fx" onclick="rmFile(${i})">✕</span></div>`
+  ).join('');
+}
+
+function rmFile(i) { uploadedFiles.splice(i, 1); renderFiles(); }
+
+// ══════════════════════════════════════════════
+//  Screen 3 – 錄音
+// ══════════════════════════════════════════════
+// Step 1：儲存表單資料並進入「確認頁」，此時尚未要求麥克風權限、也還沒開始錄音
+function goToReady() {
+  saveForm();
+  mtgTitle  = document.getElementById('inp-title').value.trim()  || '未命名會議';
+  mtgPtcp   = document.getElementById('inp-ptcp').value.trim();
+  mtgAgenda = document.getElementById('inp-agenda').value.trim();
+  mtgBg     = document.getElementById('inp-bg').value.trim();
+  uploadRef = uploadedFiles.map(f => '【' + f.name + '】\n' + f.text).join('\n\n').slice(0, 8000);
+
+  document.getElementById('ready-title').textContent = mtgTitle;
+
+  const ptcpCard = document.getElementById('ready-ptcp-card');
+  if (mtgPtcp) { document.getElementById('ready-ptcp').textContent = mtgPtcp; ptcpCard.hidden = false; }
+  else ptcpCard.hidden = true;
+
+  const agendaCard = document.getElementById('ready-agenda-card');
+  if (mtgAgenda) { document.getElementById('ready-agenda').textContent = mtgAgenda; agendaCard.hidden = false; }
+  else agendaCard.hidden = true;
+
+  const bgCard = document.getElementById('ready-bg-card');
+  if (mtgBg) { document.getElementById('ready-bg').textContent = mtgBg; bgCard.hidden = false; }
+  else bgCard.hidden = true;
+
+  const filesCard = document.getElementById('ready-files-card');
+  if (uploadedFiles.length) {
+    document.getElementById('ready-files').textContent = uploadedFiles.map(f => '📄 ' + f.name).join('、');
+    filesCard.hidden = false;
+  } else filesCard.hidden = true;
+
+  showScr('s-ready');
+}
+
+// Step 2：在確認頁按下才真正要求麥克風權限，並開始錄音
+async function startRecordingNow() {
+  const btn = document.getElementById('ready-start-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 等待麥克風授權…';
+
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🔴 開始錄音';
+    alert('無法取得麥克風：' + (e.message || e));
+    return;
+  }
+
+  // 全新會議 → 清除所有殘留
+  savedBlobs     = [];
+  lastBlob       = null;
+  processedBlobs = [];
+
+  setupRecorder();
+
+  document.getElementById('rec-name').textContent = mtgTitle;
+  document.getElementById('rec-ptcp').textContent = mtgPtcp;
+  document.getElementById('rec-seg-note').hidden  = true;
+  recSecs = 0;
+  resetRecUI();
+  updateTimer();
+  timerTick = setInterval(() => { recSecs++; updateTimer(); }, 1000);
+
+  btn.disabled = false;
+  btn.textContent = '🔴 開始錄音';
+  showScr('s-rec');
+}
+
+function setupRecorder() {
+  audioChunks = [];
+  const prefer = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
+  const mime   = prefer.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch(e) { return false; } }) || '';
+  try {
+    mediaRecorder = new MediaRecorder(
+      audioStream,
+      mime ? { mimeType: mime, audioBitsPerSecond: 24000 } : {}
+    );
+  } catch(e) {
+    mediaRecorder = new MediaRecorder(audioStream);
+  }
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = onRecStop;
+  mediaRecorder.start(1000);
+}
+
+function resetRecUI() {
+  isPaused = false;
+  document.getElementById('rec-circle').className    = 'rec-circle';
+  document.getElementById('rec-stat').className      = 'rec-stat';
+  document.getElementById('rec-stat').textContent    = savedBlobs.length > 0 ? '補錄中' : '錄音中';
+  document.getElementById('pause-icon').textContent  = '⏸️';
+  document.getElementById('pause-label').textContent = '暫停';
+}
+
+function updateTimer() {
+  const hh = Math.floor(recSecs / 3600);
+  const mm = Math.floor((recSecs % 3600) / 60);
+  const ss = recSecs % 60;
+  document.getElementById('timer').textContent =
+    (hh > 0 ? p2(hh) + ':' : '') + p2(mm) + ':' + p2(ss);
+}
+
+function stopRec() {
+  clearInterval(timerTick);
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    if (mediaRecorder.state === 'paused') mediaRecorder.resume();
+    mediaRecorder.stop();
+  }
+  if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+}
+
+function cancelRec() {
+  if (!confirm('確定取消？本次錄音（含所有補錄段）將不會儲存。')) return;
+  clearInterval(timerTick);
+  isPaused = false;
+  savedBlobs = [];
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.ondataavailable = null;
+    mediaRecorder.onstop = null;
+    if (mediaRecorder.state === 'paused') mediaRecorder.resume();
+    mediaRecorder.stop();
+  }
+  if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+  audioChunks = [];
+  showScr('s-ready');
+}
+
+function togglePause() {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+
+  if (isPaused) {
+    if (typeof mediaRecorder.resume === 'function') mediaRecorder.resume();
+    isPaused = false;
+    timerTick = setInterval(() => { recSecs++; updateTimer(); }, 1000);
+    document.getElementById('pause-icon').textContent  = '⏸️';
+    document.getElementById('pause-label').textContent = '暫停';
+    document.getElementById('rec-circle').className    = 'rec-circle';
+    document.getElementById('rec-stat').className      = 'rec-stat';
+    document.getElementById('rec-stat').textContent    = savedBlobs.length > 0 ? '補錄中' : '錄音中';
+  } else {
+    if (typeof mediaRecorder.pause === 'function') mediaRecorder.pause();
+    isPaused = true;
+    clearInterval(timerTick);
+    document.getElementById('pause-icon').textContent  = '▶️';
+    document.getElementById('pause-label').textContent = '繼續';
+    document.getElementById('rec-circle').className    = 'rec-circle paused';
+    document.getElementById('rec-stat').className      = 'rec-stat paused';
+    document.getElementById('rec-stat').textContent    = '已暫停';
+  }
+}
+
+function onRecStop() {
+  const mType = mediaRecorder.mimeType || 'audio/webm';
+  lastBlob = new Blob(audioChunks, { type: mType });
+  showDoneScreen();
+}
+
+function showDoneScreen() {
+  document.getElementById('done-name').textContent = mtgTitle;
+  const segCount = savedBlobs.length + 1;
+  const hh = Math.floor(recSecs / 3600);
+  const mm = Math.floor((recSecs % 3600) / 60);
+  const ss = recSecs % 60;
+  const durStr = (hh > 0 ? p2(hh) + ':' : '') + p2(mm) + ':' + p2(ss);
+  document.getElementById('done-info').textContent =
+    `錄音時長 ${durStr}` + (segCount > 1 ? `（共 ${segCount} 段）` : '');
+  showScr('s-done');
+}
+
+// ══════════════════════════════════════════════
+//  Screen 4 – 處理中
+// ══════════════════════════════════════════════
+function beginProcess(blob) {
+  document.getElementById('proc-err').textContent = '';
+  document.getElementById('retry-btn').hidden = true;
+  resetSteps();
+  showScr('s-proc');
+  processAudio(blob);
+}
+
+function retryProc() {
+  if (lastBlob) beginProcess(lastBlob);
+}
+
+function procCancel() {
+  if (fetchAbortCtrl) fetchAbortCtrl.abort();
+  savedBlobs     = [];
+  lastBlob       = null;
+  processedBlobs = [];
+  showScr('s-ready');
+}
+
+async function procContinueRec() {
+  if (fetchAbortCtrl) fetchAbortCtrl.abort();
+
+  if (lastBlob) {
+    savedBlobs.push(lastBlob);
+    lastBlob = null;
+  }
+
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    alert('無法取得麥克風：' + (e.message || e));
+    savedBlobs = [];
+    showScr('s-ready');
+    return;
+  }
+
+  setupRecorder();
+
+  const segNote = document.getElementById('rec-seg-note');
+  segNote.textContent = `🔄 補錄第 ${savedBlobs.length + 1} 段（前 ${savedBlobs.length} 段已保留）`;
+  segNote.hidden = false;
+
+  resetRecUI();
+  updateTimer();
+  timerTick = setInterval(() => { recSecs++; updateTimer(); }, 1000);
+  showScr('s-rec');
+}
+
+const STEP_ICONS = ['⬆️', '🤖', '📋'];
+
+function resetSteps() {
+  [0, 1, 2].forEach(i => {
+    const el = document.getElementById('step-' + i);
+    el.className = 'step' + (i > 0 ? ' s-off' : '');
+    el.querySelector('.si').textContent = STEP_ICONS[i];
+  });
+}
+
+function setStep(n) {
+  [0, 1, 2].forEach(i => {
+    const el = document.getElementById('step-' + i);
+    const si = el.querySelector('.si');
+    if      (i < n)  { el.className = 'step s-ok'; si.textContent = '✅'; }
+    else if (i === n) { el.className = 'step s-on'; si.textContent = STEP_ICONS[i]; }
+    else              { el.className = 'step s-off'; si.textContent = STEP_ICONS[i]; }
+  });
+}
+
+function showProcErr(msg) {
+  document.getElementById('proc-err').textContent = msg;
+  document.getElementById('retry-btn').hidden = false;
+}
+
+async function processAudio(blob) {
+  fetchAbortCtrl = new AbortController();
+
+  // 合併所有段
+  const allBlobs = [...savedBlobs, blob];
+  processedBlobs = allBlobs;   // 供輸出頁音檔下載
+  const segCount = allBlobs.length;
+
+  // Step 0: 轉 base64
+  setStep(0);
+  let audioParts;
+  try {
+    audioParts = await blobsToBase64(allBlobs);
+  } catch(e) {
+    showProcErr('音頻處理失敗：' + e.message);
+    return;
+  }
+
+  // Step 1: 送 Gemini
+  setStep(1);
+  let rawText;
+  try {
+    rawText = await callGemini(audioParts, segCount);
+  } catch(e) {
+    if (e.name === 'AbortError') return;
+    showProcErr('AI 分析失敗：' + e.message);
+    return;
+  }
+
+  // Step 2: 解析 & 渲染
+  setStep(2);
+  outputData = parseJSON(rawText);
+  if (!outputData) {
+    showProcErr('AI 回應格式錯誤，可能是本次會議內容較長導致回應被截斷。請點選重試；若持續發生，建議將錄音分段（先「停止」下載一次，再開新會議錄後半段）。');
+    return;
+  }
+  await delay(600);
+  renderOutput(false);   // isRestore=false → 自動下載 TXT
+  showScr('s-out');
+}
+
+async function blobsToBase64(blobs) {
+  const totalSize = blobs.reduce((s, b) => s + b.size, 0);
+  const MB = totalSize / (1024 * 1024);
+  if (totalSize > 15 * 1024 * 1024) {
+    throw new Error(
+      `錄音總大小過大（${MB.toFixed(1)} MB）。\n24 kbps 下約可錄 80 分鐘，建議縮短後重試。`
+    );
+  }
+  const parts = [];
+  for (const blob of blobs) {
+    const mime  = blob.type.split(';')[0] || 'audio/webm';
+    const buf   = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const CHUNK = 8192;
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    parts.push({ data: btoa(bin), mime });
+  }
+  return parts;
+}
+
+function buildSys() {
+  let s = '你是一個專業的會議記錄助手，使用繁體中文輸出。';
+  if (mtgAgenda) s += '\n\n【本次會議議程】\n' + mtgAgenda;
+  if (mtgBg)     s += '\n\n【背景資料 / 待決議事項】\n' + mtgBg;
+  if (mtgPtcp)   s += '\n\n【參與者】' + mtgPtcp;
+  if (uploadRef) s += '\n\n【參考資料（請在分析與任務中主動對照以下內容）】\n' + uploadRef;
+  return s;
+}
+
+// 主模型 gemini-2.5-flash，降級至 gemini-2.5-flash-lite，再等待重試
+async function callGemini(audioParts, segCount = 1, model = 'gemini-2.5-flash') {
+  const actualModel = model === 'gemini-2.5-flash-lite-retry' ? 'gemini-2.5-flash-lite' : model;
+
+  const segNote = segCount > 1
+    ? `本次會議共有 ${segCount} 段錄音（含補錄），請合併分析全程。\n`
+    : '';
+  const refNote = uploadRef
+    ? `請務必對照系統提示中的議程、背景資料及上傳的參考文件，分析錄音內容是否覆蓋了各項議程，並將參考資料中的待辦事項更新至任務表。\n`
+    : '';
+
+  const userPrompt =
+    segNote + refNote +
+    `請仔細聆聽並分析這段會議錄音，以繁體中文輸出。` +
+    `只輸出純 JSON（不含任何 markdown、說明文字），嚴格遵守以下結構：\n` +
+    `{\n` +
+    `  "summary": "整體討論摘要（條列重點，用 \\n 分隔，至少 3 點）",\n` +
+    `  "decisions": ["決議1", "決議2"],\n` +
+    `  "tasks": [\n` +
+    `    {\n` +
+    `      "task": "具體任務描述",\n` +
+    `      "assignee": "負責人或部門（未提及填「待確認」）",\n` +
+    `      "deadline": "截止日期（未提及填「未定」）",\n` +
+    `      "priority": "高、中或低",\n` +
+    `      "notes": "補充說明（無則填「-」）"\n` +
+    `    }\n` +
+    `  ]\n` +
+    `}\n` +
+    `若無明確決議或任務，對應陣列填 []。只輸出 JSON，其他什麼都不要。`;
+
+  const inlineParts = audioParts.map(a => ({ inline_data: { mime_type: a.mime, data: a.data } }));
+
+  const body = {
+    contents: [{
+      role : 'user',
+      parts: [...inlineParts, { text: userPrompt }]
+    }],
+    system_instruction : { parts: [{ text: buildSys() }] },
+    generationConfig   : { maxOutputTokens: 16384, responseMimeType: 'application/json' }
+  };
+
+  const resp = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${apiKey}`,
+    {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify(body),
+      signal : fetchAbortCtrl?.signal
+    }
+  );
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    // 主模型過載 → 降級 lite
+    if ((resp.status === 429 || resp.status === 503) && model === 'gemini-2.5-flash') {
+      return callGemini(audioParts, segCount, 'gemini-2.5-flash-lite');
+    }
+    // lite 過載 → 等 3 秒再試一次
+    if ((resp.status === 429 || resp.status === 503) && model === 'gemini-2.5-flash-lite') {
+      await delay(3000);
+      return callGemini(audioParts, segCount, 'gemini-2.5-flash-lite-retry');
+    }
+    throw new Error(err.error?.message || 'API 錯誤 ' + resp.status);
+  }
+
+  const data = await resp.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+function parseJSON(text) {
+  text = (text || '').replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  try { return JSON.parse(text); } catch(e) {}
+  const m = text.match(/\{[\s\S]+\}/);
+  if (m) try { return JSON.parse(m[0]); } catch(e) {}
+  return null;  // 解析失敗，交由呼叫端顯示明確錯誤（不可硬湊結果）
+}
+
+// ══════════════════════════════════════════════
+//  Screen 5 – 輸出
+// ══════════════════════════════════════════════
+function renderOutput(isRestore = false) {
+  const d = outputData || {};
+
+  // 持久化至 localStorage（新結果或恢復都存一次）
+  try {
+    localStorage.setItem(OUTPUT_S, JSON.stringify({
+      data   : outputData,
+      title  : mtgTitle,
+      ptcp   : mtgPtcp,
+      agenda : mtgAgenda,
+      bg     : mtgBg
+    }));
+  } catch(e) {}
+
+  document.getElementById('out-date').textContent  = new Date().toLocaleDateString('zh-TW');
+  document.getElementById('out-title').textContent = mtgTitle || '會議紀錄';
+
+  // 音檔按鈕：僅當記憶體內仍有 blob 時顯示
+  document.getElementById('dl-audio-btn').hidden = (processedBlobs.length === 0);
+
+  let html = '';
+
+  html += `<div class="os">
+    <h3>📝 討論摘要</h3>
+    <div class="sum-txt">${h(d.summary || '（未產生摘要）')}</div>
+  </div>`;
+
+  if (d.decisions?.length) {
+    html += `<div class="os"><h3>✅ 重要決議</h3>`;
+    html += d.decisions.map(dec => `<div class="dec-row">• ${h(dec)}</div>`).join('');
+    html += `</div>`;
+  }
+
+  if (d.tasks?.length) {
+    html += `<div class="os"><h3>📋 行動事項</h3><div class="tbl-wrap">`;
+    html += `<table class="task-tbl">
+      <thead><tr><th>任務</th><th>負責人</th><th>截止</th><th>優先</th></tr></thead>
+      <tbody>`;
+    html += d.tasks.map(t => {
+      const bc   = t.priority === '高' ? 'b-h' : t.priority === '中' ? 'b-m' : 'b-l';
+      const note = (t.notes && t.notes !== '-')
+        ? `<div class="note-txt">${h(t.notes)}</div>` : '';
+      return `<tr>
+        <td>${h(t.task)}${note}</td>
+        <td>${h(t.assignee)}</td>
+        <td style="white-space:nowrap">${h(t.deadline)}</td>
+        <td><span class="badge ${bc}">${h(t.priority)}</span></td>
+      </tr>`;
+    }).join('');
+    html += `</tbody></table></div></div>`;
+  }
+
+  document.getElementById('out-body').innerHTML = html;
+
+  // 全新結果才自動下載 TXT；恢復舊資料不重複下載
+  if (!isRestore) {
+    setTimeout(() => {
+      exportTxt();
+      showToast('📥 TXT 備份已自動下載');
+    }, 800);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  匯出
+// ══════════════════════════════════════════════
+function exportTxt() {
+  const d    = outputData || {};
+  const nowS = new Date().toLocaleString('zh-TW');
+  const lines = [
+    '【會議紀錄】',
+    '日期：' + nowS,
+    '名稱：' + mtgTitle,
+    '參與者：' + (mtgPtcp || '（未填）'),
+    '',
+    '══════════════════════',
+    '一、討論摘要',
+    '══════════════════════',
+    d.summary || '（無）'
+  ];
+
+  if (d.decisions?.length) {
+    lines.push(
+      '',
+      '══════════════════════',
+      '二、重要決議',
+      '══════════════════════',
+      ...d.decisions.map((v, i) => `${i + 1}. ${v}`)
+    );
+  }
+
+  if (d.tasks?.length) {
+    lines.push(
+      '',
+      '══════════════════════',
+      '三、行動事項',
+      '══════════════════════',
+      ...d.tasks.map((t, i) =>
+        `${i + 1}. ${t.task}\n` +
+        `   負責人：${t.assignee} ｜ 截止：${t.deadline} ｜ 優先：${t.priority}\n` +
+        `   備注：${t.notes}`)
+    );
+  }
+
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+  dlFile(blob, 'meeting_' + dateStr() + '.txt');
+}
+
+function exportXls() {
+  const d  = outputData || {};
+  const wb = XLSX.utils.book_new();
+
+  // 摘要拆成一點一列，方便閱讀與篩選（原本整段文字塞一格，不易讀）
+  const summaryPoints = (d.summary || '')
+    .split('\n')
+    .map(s => s.replace(/^\d+[.、]\s*/, '').trim())
+    .filter(Boolean);
+
+  const ws1Rows = [
+    ['會議名稱', mtgTitle],
+    ['日期',     new Date().toLocaleDateString('zh-TW')],
+    ['參與者',   mtgPtcp],
+    [],
+    ['討論摘要'],
+    ['#', '重點內容'],
+    ...(summaryPoints.length ? summaryPoints.map((p, i) => [i + 1, p]) : [['—', '（無）']])
+  ];
+
+  if (d.decisions?.length) {
+    ws1Rows.push([], ['重要決議'], ['#', '決議內容'], ...d.decisions.map((v, i) => [i + 1, v]));
+  }
+
+  const ws1 = XLSX.utils.aoa_to_sheet(ws1Rows);
+  ws1['!cols'] = [{ wch: 6 }, { wch: 70 }];
+  XLSX.utils.book_append_sheet(wb, ws1, '會議摘要');
+
+  // 沒有行動事項時，直接不建立這個工作表
+  if (d.tasks?.length) {
+    const ws2 = XLSX.utils.aoa_to_sheet([
+      ['任務', '負責人 / 部門', '截止日期', '優先級', '備注'],
+      ...d.tasks.map(t => [t.task, t.assignee, t.deadline, t.priority, t.notes])
+    ]);
+    ws2['!cols'] = [{ wch: 32 }, { wch: 16 }, { wch: 12 }, { wch: 8 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, ws2, '行動事項');
+  }
+
+  XLSX.writeFile(wb, 'meeting_' + dateStr() + '.xlsx');
+}
+
+async function exportAudio() {
+  if (!processedBlobs.length) {
+    showToast('⚠️ 錄音資料已清除（重新整理後無法取回）');
+    return;
+  }
+  showToast('🎙️ 下載錄音中…');
+  for (let i = 0; i < processedBlobs.length; i++) {
+    const blob = processedBlobs[i];
+    const ext  = blob.type.includes('ogg') ? 'ogg' : 'webm';
+    const suf  = processedBlobs.length > 1 ? `_seg${i + 1}` : '';
+    dlFile(blob, `meeting_audio_${dateStr()}${suf}.${ext}`);
+    if (i < processedBlobs.length - 1) await delay(400);
+  }
+}
+
+async function exportScreenshot() {
+  if (typeof html2canvas === 'undefined') {
+    showToast('⚠️ 截圖功能載入失敗，已略過（其餘檔案仍會下載）');
+    return;
+  }
+  const appEl  = document.getElementById('app');
+  const scrEl  = document.getElementById('s-out');
+  const bodyEl = document.getElementById('out-body');
+  const foot1s = scrEl.querySelectorAll('.foot1');
+  const foot2s = scrEl.querySelectorAll('.foot2');
+
+  // 暫時展開整個畫面高度，避免截圖只拍到目前捲動到的可視範圍
+  const prev = {
+    appH: appEl.style.height, appOf: appEl.style.overflow,
+    scrOf: scrEl.style.overflow,
+    bodyOf: bodyEl.style.overflow, bodyFlex: bodyEl.style.flex, bodyH: bodyEl.style.height
+  };
+  appEl.style.height   = 'auto';
+  appEl.style.overflow = 'visible';
+  scrEl.style.overflow = 'visible';
+  bodyEl.style.overflow = 'visible';
+  bodyEl.style.flex     = 'none';
+  bodyEl.style.height   = 'auto';
+  foot1s.forEach(el => el.style.visibility = 'hidden');
+  foot2s.forEach(el => el.style.visibility = 'hidden');
+
+  try {
+    const canvas = await html2canvas(scrEl, {
+      backgroundColor: '#f2f2f7',
+      scale: 2,
+      useCORS: true
+    });
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    if (blob) dlFile(blob, 'meeting_' + dateStr() + '.png');
+  } catch(e) {
+    showToast('⚠️ 截圖產生失敗：' + e.message);
+  } finally {
+    appEl.style.height    = prev.appH;
+    appEl.style.overflow  = prev.appOf;
+    scrEl.style.overflow  = prev.scrOf;
+    bodyEl.style.overflow = prev.bodyOf;
+    bodyEl.style.flex     = prev.bodyFlex;
+    bodyEl.style.height   = prev.bodyH;
+    foot1s.forEach(el => el.style.visibility = '');
+    foot2s.forEach(el => el.style.visibility = '');
+  }
+}
+
+// 關閉會議：不做任何自動下載，只做防呆確認後清除暫存紀錄並嘗試關閉頁面。
+// 各檔案（TXT / Excel / 音檔 / 截圖）一律由使用者自行點擊上方個別按鈕下載，
+// 避免瀏覽器靜默擋下連續自動下載而遺漏檔案。
+function closeMeeting() {
+  const ok = confirm('確定都有下載完畢嗎？\n（TXT / Excel / 音檔 / 截圖，關閉後將無法再從此頁面下載）');
+  if (!ok) return;
+
+  // 使用者確認後才清除暫存紀錄，避免誤觸就遺失尚未下載的資料
+  try { localStorage.removeItem(OUTPUT_S); } catch(e) {}
+
+  showToast('✅ 會議已關閉，即將嘗試關閉頁面', 2500);
+  setTimeout(() => {
+    window.close();
+    // 若瀏覽器安全限制無法自動關閉（例如非程式開啟的分頁），提示使用者手動關閉
+    showToast('請手動關閉此分頁', 3000);
+  }, 600);
+}
+
+function newMtg() {
+  localStorage.removeItem(OUTPUT_S);   // 清除持久化記錄
+  outputData     = null;
+  processedBlobs = [];
+  lastBlob       = null;
+  savedBlobs     = [];
+  fetchAbortCtrl = null;
+  audioChunks    = [];
+  isPaused       = false;
+  uploadedFiles  = [];
+  document.getElementById('file-list').innerHTML = '';
+  hideRecoverBanner();
+  showScr('s-setup');
+}
+
+// ══════════════════════════════════════════════
+//  工具函式
+// ══════════════════════════════════════════════
+function h(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function p2(n)    { return String(n).padStart(2, '0'); }
+function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
+function dateStr(){ return new Date().toISOString().slice(0, 10); }
+function dlFile(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+}
+function showToast(msg, ms = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), ms);
+}
+</script>
 </body>
 </html>
